@@ -182,15 +182,40 @@ class NovaPackage:
                         hash_fnc.update(part.data.serialize())
         return hash_fnc.digest()    
    
-    def sign(self,kcdsa_private_key:bytes,eddsa_private_key:bytes):
+    def sign(self, kcdsa_private_key: bytes, eddsa_private_key: bytes):
         import hashlib
-        from mikro import mikro_kcdsa_sign,mikro_eddsa_sign
-        self[NpkPartID.SIGNATURE].data = b'\0'*(20+48+64)
-        sha1_digest = self.get_digest(hashlib.new('SHA1'))
-        sha256_digest = self.get_digest(hashlib.new('SHA256'))
-        kcdsa_signature = mikro_kcdsa_sign(sha256_digest[:20],kcdsa_private_key)
-        eddsa_signature = mikro_eddsa_sign(sha256_digest,eddsa_private_key)
-        self[NpkPartID.SIGNATURE].data = sha1_digest + kcdsa_signature + eddsa_signature
+        from mikro import mikro_kcdsa_sign, mikro_eddsa_sign
+        build_time = os.environ['BUILD_TIME'] if 'BUILD_TIME' in os.environ else None
+        if len(self._packages) > 0:
+            if build_time:
+                self[NpkPartID.PKG_INFO].data._build_time = int(build_time)
+            for package in self._packages:
+                if len(package[NpkPartID.SIGNATURE].data) != 20+48+64:
+                    package[NpkPartID.SIGNATURE].data = b'\0'*(20+48+64)
+                if build_time:
+                    package[NpkPartID.NAME_INFO].data._build_time = int(
+                        build_time)
+                sha1_digest = self.get_digest(hashlib.new('SHA1'), package)
+                sha256_digest = self.get_digest(hashlib.new('SHA256'), package)
+                kcdsa_signature = mikro_kcdsa_sign(
+                    sha256_digest[:20], kcdsa_private_key)
+                eddsa_signature = mikro_eddsa_sign(
+                    sha256_digest, eddsa_private_key)
+                package[NpkPartID.SIGNATURE].data = sha1_digest + \
+                    kcdsa_signature + eddsa_signature
+        else:
+            if len(self[NpkPartID.SIGNATURE].data) != 20+48+64:
+                self[NpkPartID.SIGNATURE].data = b'\0'*(20+48+64)
+            if build_time:
+                self[NpkPartID.NAME_INFO].data._build_time = int(build_time)
+            sha1_digest = self.get_digest(hashlib.new('SHA1'))
+            sha256_digest = self.get_digest(hashlib.new('SHA256'))
+            kcdsa_signature = mikro_kcdsa_sign(
+                sha256_digest[:20], kcdsa_private_key)
+            eddsa_signature = mikro_eddsa_sign(
+                sha256_digest, eddsa_private_key)
+            self[NpkPartID.SIGNATURE].data = sha1_digest + \
+                kcdsa_signature + eddsa_signature
 
     def verify(self,kcdsa_public_key:bytes,eddsa_public_key:bytes):
         import hashlib
