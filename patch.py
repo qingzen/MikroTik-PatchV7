@@ -96,31 +96,45 @@ def patch_npk_file(key_dict, kcdsa_private_key, eddsa_private_key, input_file, o
     npk.save(output_file or input_file)
 
 if __name__ == '__main__':
-    import argparse,os
+    import argparse
+    import os
     parser = argparse.ArgumentParser(description='MikroTik patcher')
     subparsers = parser.add_subparsers(dest="command")
-    npk_parser = subparsers.add_parser('npk',help='patch and sign npk file')
-    npk_parser.add_argument('input',type=str, help='Input file')
-    npk_parser.add_argument('-o','--output',type=str,help='Output file')
-    netinstall_parser = subparsers.add_parser('netinstall',help='patch netinstall file')
-    netinstall_parser.add_argument('input',type=str, help='Input file')
-    netinstall_parser.add_argument('-o','--output',type=str,help='Output file')
+    npk_parser = subparsers.add_parser('npk', help='patch and sign npk file')
+    npk_parser.add_argument('input', type=str, help='Input file')
+    npk_parser.add_argument('-O', '--output', type=str, help='Output file')
+    kernel_parser = subparsers.add_parser('kernel', help='patch kernel file')
+    kernel_parser.add_argument('input', type=str, help='Input file')
+    kernel_parser.add_argument('-O', '--output', type=str, help='Output file')
+    block_parser = subparsers.add_parser('block', help='patch block file')
+    block_parser.add_argument('dev', type=str, help='block device')
+    block_parser.add_argument('file', type=str, help='file path')
+    netinstall_parser = subparsers.add_parser(
+        'netinstall', help='patch netinstall file')
+    netinstall_parser.add_argument('input', type=str, help='Input file')
+    netinstall_parser.add_argument(
+        '-O', '--output', type=str, help='Output file')
     args = parser.parse_args()
     key_dict = {
-        bytes.fromhex(os.environ['MIKRO_LICENSE_PUBLIC_KEY']):bytes.fromhex(os.environ['CUSTOM_LICENSE_PUBLIC_KEY']),
-        bytes.fromhex(os.environ['MIKRO_NPK_SIGN_PUBLIC_LKEY']):bytes.fromhex(os.environ['CUSTOM_NPK_SIGN_PUBLIC_KEY'])
+        bytes.fromhex(os.environ['MIKRO_LICENSE_PUBLIC_KEY']): bytes.fromhex(os.environ['CUSTOM_LICENSE_PUBLIC_KEY']),
+        bytes.fromhex(os.environ['MIKRO_NPK_SIGN_PUBLIC_KEY']): bytes.fromhex(os.environ['CUSTOM_NPK_SIGN_PUBLIC_KEY'])
     }
     kcdsa_private_key = bytes.fromhex(os.environ['CUSTOM_LICENSE_PRIVATE_KEY'])
-    eddsa_private_key = bytes.fromhex(os.environ['CUSTOM_NPK_SIGN_PRIVATE_KEY'])
-    if args.command =='npk':
+    eddsa_private_key = bytes.fromhex(
+        os.environ['CUSTOM_NPK_SIGN_PRIVATE_KEY'])
+    if args.command == 'npk':
         print(f'patching {args.input} ...')
-        patch_npk_file(key_dict,kcdsa_private_key,eddsa_private_key,args.input,args.output)
+        patch_npk_file(key_dict, kcdsa_private_key,
+                       eddsa_private_key, args.input, args.output)
+    elif args.command == 'kernel':
+        print(f'patching {args.input} ...')
+        data = patch_kernel(open(args.input, 'rb').read(), key_dict)
+        open(args.output or args.input, 'wb').write(data)
+    elif args.command == 'block':
+        print(f'patching {args.file} in {args.dev} ...')
+        patch_block(args.dev, args.file, key_dict)
     elif args.command == 'netinstall':
-        from netinstall import patch_netinstall
         print(f'patching {args.input} ...')
-        patch_netinstall(key_dict,args.input,args.output)
+        patch_netinstall(key_dict, args.input, args.output)
     else:
         parser.print_help()
-
-
-    
