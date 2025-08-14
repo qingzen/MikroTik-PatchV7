@@ -1,4 +1,4 @@
-import struct,lzma,pefile
+import struct,lzma
 ROUTEROS_BOOT = {
     129:{'arch':'power','name':'Powerboot','filter':lzma.FILTER_POWERPC},
     130:{'arch':'e500','name':'e500_boot'},
