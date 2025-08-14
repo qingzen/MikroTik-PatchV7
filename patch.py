@@ -45,6 +45,25 @@ def patch_bzimage(data:bytes,key_dict:dict):
     new_data = new_data.replace(vmlinux_xz,new_vmlinux_xz)
     return new_data
 
+
+def patch_kernel(data: bytes, key_dict):
+    if data[:2] == b'MZ':
+        print('patching EFI Kernel')
+        if data[56:60] == b'ARM\x64':
+            print('patching arm64')
+            return patch_elf(data, key_dict)
+        else:
+            print('patching x86_64')
+            return patch_bzimage(data, key_dict)
+    elif data[:4] == b'\x7FELF':
+        print('patching ELF')
+        return patch_elf(data, key_dict)
+    elif data[:5] == b'\xFD7zXZ':
+        print('patching initrd')
+        return patch_initrd_xz(data, key_dict)
+    else:
+        raise Exception('unknown kernel format')
+
 def run_shell_command(command):
     process = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return process.stdout, process.stderr
