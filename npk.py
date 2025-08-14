@@ -1,5 +1,6 @@
 
 import struct,zlib
+import argparse,os
 from datetime import datetime
 from dataclasses import dataclass
 from enum import IntEnum
@@ -263,11 +264,8 @@ class NovaPackage:
         assert int.from_bytes(data[:4],'little') == NovaPackage.NPK_MAGIC, 'Invalid Nova Package Magic'
         assert int.from_bytes(data[4:8],'little') == len(data) - 8, 'Invalid Nova Package Size'
         return NovaPackage(data[8:])
-  
 
-    
 if __name__=='__main__':
-    import argparse,os
     parser = argparse.ArgumentParser(description='nova package creator and editor')
     subparsers = parser.add_subparsers(dest="command")
     sign_parser = subparsers.add_parser('sign',help='sign npk file')
@@ -286,6 +284,7 @@ if __name__=='__main__':
     eddsa_private_key = bytes.fromhex(os.environ['CUSTOM_NPK_SIGN_PRIVATE_KEY'])
     kcdsa_public_key = bytes.fromhex(os.environ['CUSTOM_LICENSE_PUBLIC_KEY'])
     eddsa_public_key = bytes.fromhex(os.environ['CUSTOM_NPK_SIGN_PUBLIC_KEY'])
+    
     if args.command =='sign':
         print(f'Signing {args.input}')
         npk = NovaPackage.load(args.input)
