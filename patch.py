@@ -49,7 +49,6 @@ def patch_bzimage(data:bytes,key_dict:dict):
 def patch_kernel(kernel_data, key_dict):
     patched_data = kernel_data
 
-    # Pastikan semua patch dijalankan
     for old_bytes, new_bytes in key_dict.items():
         if isinstance(old_bytes, str):
             old_bytes = old_bytes.encode()
@@ -107,7 +106,7 @@ def patch_npk_package(package,key_dict):
 def patch_npk_file(key_dict, kcdsa_private_key, eddsa_private_key, input_file, output_file=None):
     npk = NovaPackage.load(input_file)   
 
-    if len(npk, '_packages') and npk._packages:
+    if hasattr(npk, '_packages') and npk._packages:
         for package in npk._packages:
             patch_npk_package(package, key_dict)
     else:
