@@ -17,7 +17,7 @@ jobs:
         channel: [stable, testing]
     env:
       TZ: 'Asia/Shanghai'
-      LATEST7_VERSION_URL: 'https://upgrade.mikrotik.com/routeros/NEWESTa7.stable'
+      LATEST7_VERSION_URL: 'https://upgrade.mikrotik.com/routeros/NEWESTa7'
       LATEST6_VERSION_URL: 'http://upgrade.mikrotik.com/routeros/LATEST.6'
       LATEST_VERSION: ""
       CUSTOM_LICENSE_PRIVATE_KEY: ${{ secrets.CUSTOM_LICENSE_PRIVATE_KEY }}
