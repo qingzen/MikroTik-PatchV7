@@ -85,14 +85,14 @@ def patch_npk_package(package, key_dict):
         run_shell_command(f"rm -f {squashfs_file}")
 
 
-def patch_npk_file(key_dict, kcdsa_private_key, eddsa_private_key, input_file, output_file=None):
-    npk = NovaPackage.load(input_file)
+def patch_npk_file(key_dict,kcdsa_private_key,eddsa_private_key,input_file,output_file=None):
+    npk = NovaPackage.load(input_file)   
     if len(npk._packages) > 0:
         for package in npk._packages:
-            patch_npk_package(package, key_dict)
+            patch_npk_package(package,key_dict)
     else:
-        patch_npk_package(npk, key_dict)
-    npk.sign(kcdsa_private_key, eddsa_private_key)
+        patch_npk_package(npk,key_dict)
+    npk.sign(kcdsa_private_key,eddsa_private_key)
     npk.save(output_file or input_file)
 
 if __name__ == '__main__':
