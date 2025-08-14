@@ -2,6 +2,7 @@
 import struct,zlib
 import argparse,os
 import hashlib
+from mikro import mikro_kcdsa_sign, mikro_eddsa_sign
 from datetime import datetime
 from dataclasses import dataclass
 from enum import IntEnum
@@ -185,7 +186,6 @@ class NovaPackage:
         return hash_fnc.digest()    
    
     def sign(self, kcdsa_private_key: bytes, eddsa_private_key: bytes):
-    from mikro import mikro_kcdsa_sign, mikro_eddsa_sign
     build_time = os.environ.get('BUILD_TIME', None)
 
     if hasattr(self, "_packages") and len(self._packages) > 0:
