@@ -1,7 +1,6 @@
 import subprocess,lzma
 import struct,os
 from npk import NovaPackage,NpkPartID,NpkFileContainer
-from netinstall import patch_netinstall
 
 def patch_bzimage(data:bytes,key_dict:dict):
     PE_TEXT_SECTION_OFFSET = 414
@@ -99,6 +98,7 @@ def patch_npk_file(key_dict, kcdsa_private_key, eddsa_private_key, input_file, o
 if __name__ == '__main__':
     import argparse
     import os
+    from netinstall import patch_netinstall
     parser = argparse.ArgumentParser(description='MikroTik patcher')
     subparsers = parser.add_subparsers(dest="command")
     npk_parser = subparsers.add_parser('npk', help='patch and sign npk file')
