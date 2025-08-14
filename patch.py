@@ -1,6 +1,7 @@
 import subprocess,lzma
 import struct,os
 from npk import NovaPackage,NpkPartID,NpkFileContainer
+from netinstall import patch_netinstall
 
 def patch_bzimage(data:bytes,key_dict:dict):
     PE_TEXT_SECTION_OFFSET = 414
