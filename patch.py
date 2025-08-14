@@ -61,34 +61,33 @@ def patch_squashfs(path,key_dict):
                         data = data.replace(old_public_key,new_public_key)
                         open(file,'wb').write(data)
 
-def patch_npk_package(package, key_dict):
+def patch_npk_package(package,key_dict):
     if package[NpkPartID.NAME_INFO].data.name == 'system':
-        file_container = NpkFileContainer.unserialize_from(
-            package[NpkPartID.FILE_CONTAINER].data)
+        file_container = NpkFileContainer.unserialize_from(package[NpkPartID.FILE_CONTAINER].data)
         for item in file_container:
-            if item.name in [b'boot/EFI/BOOT/BOOTX64.EFI', b'boot/kernel', b'boot/initrd.rgz']:
+            if item.name in [b'boot/EFI/BOOT/BOOTX64.EFI',b'boot/kernel',b'boot/initrd.rgz']:
                 print(f'patch {item.name} ...')
-                item.data = patch_kernel(item.data, key_dict)
+                item.data = patch_kernel(item.data,key_dict)
         package[NpkPartID.FILE_CONTAINER].data = file_container.serialize()
         squashfs_file = 'squashfs-root.sfs'
         extract_dir = 'squashfs-root'
-        open(squashfs_file, 'wb').write(package[NpkPartID.SQUASHFS].data)
+        open(squashfs_file,'wb').write(package[NpkPartID.SQUASHFS].data)
         print(f"extract {squashfs_file} ...")
         run_shell_command(f"unsquashfs -d {extract_dir} {squashfs_file}")
-        patch_squashfs(extract_dir, key_dict)
+        patch_squashfs(extract_dir,key_dict)
         print(f"pack {extract_dir} ...")
         run_shell_command(f"rm -f {squashfs_file}")
         run_shell_command(f"mksquashfs {extract_dir} {squashfs_file} -quiet -comp xz -no-xattrs -b 256k")
         print(f"clean ...")
         run_shell_command(f"rm -rf {extract_dir}")
-        package[NpkPartID.SQUASHFS].data = open(squashfs_file, 'rb').read()
+        package[NpkPartID.SQUASHFS].data = open(squashfs_file,'rb').read()
         run_shell_command(f"rm -f {squashfs_file}")
 
 
 def patch_npk_file(key_dict, kcdsa_private_key, eddsa_private_key, input_file, output_file=None):
     npk = NovaPackage.load(input_file)   
 
-    if hasattr(npk, '_packages') and npk._packages:
+    if len(npk, '_packages') and npk._packages:
         for package in npk._packages:
             patch_npk_package(package, key_dict)
     else:
