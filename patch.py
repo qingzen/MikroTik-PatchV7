@@ -61,41 +61,38 @@ def patch_squashfs(path,key_dict):
                         data = data.replace(old_public_key,new_public_key)
                         open(file,'wb').write(data)
 
-def patch_npk_file(key_dict,kcdsa_private_key,eddsa_private_key,input_file,output_file=None):
-    npk = NovaPackage.load(input_file)    
-    if npk[NpkPartID.NAME_INFO].data.name == 'system':
-        file_container = NpkFileContainer.unserialize_from(npk[NpkPartID.FILE_CONTAINER].data)
+def patch_npk_package(package, key_dict):
+    if package[NpkPartID.NAME_INFO].data.name == 'system':
+        file_container = NpkFileContainer.unserialize_from(
+            package[NpkPartID.FILE_CONTAINER].data)
         for item in file_container:
-            if item.name == b'boot/EFI/BOOT/BOOTX64.EFI':
+            if item.name in [b'boot/EFI/BOOT/BOOTX64.EFI', b'boot/kernel', b'boot/initrd.rgz']:
                 print(f'patch {item.name} ...')
-                item.data = patch_bzimage(item.data,key_dict)
-                open('linux','wb').write(item.data)
-            elif item.name == b'boot/kernel':
-                from netinstall import patch_elf
-                print(f'patch {item.name} ...')
-                item.data = patch_elf(item.data,key_dict)
-                open('linux','wb').write(item.data)
-       
-        npk[NpkPartID.FILE_CONTAINER].data = file_container.serialize()
-        try:
-            squashfs_file = 'squashfs.sfs'
-            extract_dir = 'squashfs-root'
-            open(squashfs_file,'wb').write(npk[NpkPartID.SQUASHFS].data)
-            print(f"extract {squashfs_file} ...")
-            _, stderr = run_shell_command(f"unsquashfs -d {extract_dir} {squashfs_file}")
-            print(stderr.decode())
-            patch_squashfs(extract_dir,key_dict)
-            print(f"pack {extract_dir} ...")
-            run_shell_command(f"rm -f {squashfs_file}")
-            _, stderr = run_shell_command(f"mksquashfs {extract_dir} {squashfs_file} -quiet -comp xz -no-xattrs -b 256k")
-            print(stderr.decode())
-        except Exception as e:
-            print(e)
+                item.data = patch_kernel(item.data, key_dict)
+        package[NpkPartID.FILE_CONTAINER].data = file_container.serialize()
+        squashfs_file = 'squashfs-root.sfs'
+        extract_dir = 'squashfs-root'
+        open(squashfs_file, 'wb').write(package[NpkPartID.SQUASHFS].data)
+        print(f"extract {squashfs_file} ...")
+        run_shell_command(f"unsquashfs -d {extract_dir} {squashfs_file}")
+        patch_squashfs(extract_dir, key_dict)
+        print(f"pack {extract_dir} ...")
+        run_shell_command(f"rm -f {squashfs_file}")
+        run_shell_command(f"mksquashfs {extract_dir} {squashfs_file} -quiet -comp xz -no-xattrs -b 256k")
         print(f"clean ...")
         run_shell_command(f"rm -rf {extract_dir}")
-        npk[NpkPartID.SQUASHFS].data = open(squashfs_file,'rb').read()
+        package[NpkPartID.SQUASHFS].data = open(squashfs_file, 'rb').read()
         run_shell_command(f"rm -f {squashfs_file}")
-    npk.sign(kcdsa_private_key,eddsa_private_key)
+
+
+def patch_npk_file(key_dict, kcdsa_private_key, eddsa_private_key, input_file, output_file=None):
+    npk = NovaPackage.load(input_file)
+    if len(npk._packages) > 0:
+        for package in npk._packages:
+            patch_npk_package(package, key_dict)
+    else:
+        patch_npk_package(npk, key_dict)
+    npk.sign(kcdsa_private_key, eddsa_private_key)
     npk.save(output_file or input_file)
 
 if __name__ == '__main__':
