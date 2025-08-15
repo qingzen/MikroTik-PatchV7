@@ -1,6 +1,7 @@
 
 import struct,zlib
-import argparse,osimport,hashlib
+import argparse,os
+import hashlib
 from mikro import mikro_kcdsa_sign, mikro_eddsa_sign
 from datetime import datetime
 from dataclasses import dataclass
