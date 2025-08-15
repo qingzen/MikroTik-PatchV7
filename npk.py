@@ -187,7 +187,7 @@ class NovaPackage:
         import hashlib
         from mikro import mikro_kcdsa_sign, mikro_eddsa_sign
         build_time = os.environ['BUILD_TIME'] if 'BUILD_TIME' in os.environ else None
-    if hasattr(self, "_packages") and len(self._packages) > 0:
+    if hasattr(self._packages) and len(self._packages) > 0:
         if build_time:
             self[NpkPartID.PKG_INFO].data._build_time = int(build_time)
         for package in self._packages:
